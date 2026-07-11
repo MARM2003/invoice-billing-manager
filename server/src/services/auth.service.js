@@ -5,7 +5,7 @@ import { generateToken } from "../utils/generateToken.js";
 //register logic
 export const registerUser=async(userData)=>{
     //destructing the data
-    const {name,email,password}=userData;
+    const {name,email,password,companyName}=userData;
 
     //checking for existing user
     const existingUser= await prisma.user.findUnique(
@@ -27,6 +27,7 @@ export const registerUser=async(userData)=>{
             name,
             email,
             password:hashedPassword,
+            companyName
         },
     })
 
@@ -38,7 +39,8 @@ export const registerUser=async(userData)=>{
         user:{
             id:user.id,
             name:user.name,
-            email:user.email
+            email:user.email,
+            company_name:user.companyName,
         },
         token
      }
@@ -70,7 +72,9 @@ export const loginUser=async(email,password)=>{
         user:{
             id:user.id,
             name:user.name,
-            email:user.email
+            email:user.email,
+            company_name:user.companyName,
+            profilestatus:user.profileCompleted
         },
         token
      }
