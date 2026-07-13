@@ -46,7 +46,7 @@ const sidebarMenu = [
   {
     id: 7,
     title: "Logout",
-    path: "/logout",
+    action: "logout",
     icon: LogoutIcon,
   },
 ];
