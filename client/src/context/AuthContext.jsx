@@ -1,45 +1,51 @@
 import { createContext, useContext, useEffect, useState } from "react";
-
+import {
+    getAuth,
+    setAuth,
+    clearAuth,
+} from "../utils/tokenStorage";
+import { logoutUser } from "../services/auth.service";
+import { toast } from "react-toastify"
+import { useNavigate } from "react-router-dom"
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-    const [user, setUser] = useState(() => {
-        const storedUser = localStorage.getItem("user");
-        return storedUser ? JSON.parse(storedUser) : null;
-    });
+    const navigate = useNavigate();
+
+
+    const [user, setUser] = useState(() => getAuth());
+
 
     // Store user after login
     const login = (userData) => {
         setUser(userData);
-        localStorage.setItem("user", JSON.stringify(userData));
+        setAuth(userData);
     };
 
+
     // Logout
-    const logout = () => {
+    const logout = async () => {
+        await logoutUser();
+
         setUser(null);
-        localStorage.removeItem("user");
+        clearAuth();
+
+        toast.success("Logged Out", {
+            onClose: () => navigate("/login"),
+        });
     };
 
     const updateUser = (updatedUser) => {
         const updatedAuth = {
-            ...user,          // Keeps the accessToken
-            user: updatedUser // Replaces only the user object
+            ...user,
+            user: updatedUser,
         };
 
         setUser(updatedAuth);
-
-        localStorage.setItem(
-            "user",
-            JSON.stringify(updatedAuth)
-        );
+        setAuth(updatedAuth);
     };
 
-    // //keep user logged in after refresh
-    // useEffect(() => {
-    //     const storedUser = localStorage.getItem("user")
-
-    //     if (storedUser) setUser(JSON.parse(storedUser))
-    // }, [])
+    
 
     return (
         <AuthContext.Provider value={{ user, login, logout, updateUser, isAuthenticated: !!user, }}>{children}</AuthContext.Provider>
