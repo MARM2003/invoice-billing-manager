@@ -13,40 +13,41 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(uuid())
+  id                    String   @id @default(uuid())
 
   // Authentication
-  name          String
-  email         String   @unique
-  password      String
+  name                  String
+  email                 String   @unique
+  password              String
 
   // Business Information
-  companyName   String
-  phone         String?
+  companyName           String
+  phone                 String?
 
-  addressLine1  String?
-  addressLine2  String?
-  city          String?
-  state         String?
-  country       String?
-  postalCode    String?
+  addressLine1          String?
+  addressLine2          String?
+  city                  String?
+  state                 String?
+  country               String?
+  postalCode            String?
 
-  gstNumber     String?
-  panNumber     String?
+  isGstRegistered       Boolean  @default(false)
+  gstNumber             String?
+  panNumber             String?
 
   // Branding
-  logo          String?
+  logo                  String?
 
   // Banking Information
-  bankName            String?
-  accountHolderName   String?
-  accountNumber       String?
-  ifscCode            String?
-  upiId               String?
+  bankName              String?
+  accountHolderName     String?
+  accountNumber         String?
+  ifscCode              String?
+  upiId                 String?
 
   // Profile Status
-  profileCompleted Boolean @default(false)
+  profileCompleted      Boolean  @default(false)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
