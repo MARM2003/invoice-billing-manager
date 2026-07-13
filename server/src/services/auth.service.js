@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import prisma from "../prismaClient/prismaClient.js";
-import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
+import { generateAccessToken, generateRefreshToken ,verifyRefreshToken} from "../utils/jwt.js";
 
 //register logic
 export const registerUser = async (userData) => {
@@ -82,4 +82,24 @@ export const loginUser = async (email, password) => {
         refreshToken
     }
 
+}
+
+//logout user
+export const logoutUser=async()=>{
+   return {
+        message: "Logged out successfully",
+    };
+}
+
+//refreshing the accessToken
+export const refreshUserAccessToken=async(refreshToken)=>{
+    if(!refreshToken) throw new Error("Refresh token not found")
+    
+    const decoded = verifyRefreshToken(refreshToken)
+
+    const accessToken=generateAccessToken(decoded.userId)
+
+    return {
+        accessToken
+    }
 }
