@@ -7,10 +7,11 @@ import {
 } from "@mui/material";
 
 import MenuIcon from "@mui/icons-material/Menu";
-
+import useAuth from "../../hooks/useAuth"
 const drawerWidth = 260;
 
 const Navbar = ({ handleDrawerToggle }) => {
+  const {user}=useAuth();
   return (
     <AppBar
       position="fixed"
@@ -71,7 +72,7 @@ const Navbar = ({ handleDrawerToggle }) => {
               },
             }}
           >
-            ABC Technologies
+          {user && user.user?.company_name}
           </Typography>
         </Box>
       </Toolbar>
