@@ -1,4 +1,5 @@
-import { registerUser, loginUser } from "../services/auth.service.js";
+import { success } from "zod";
+import { registerUser, loginUser ,logoutUser, refreshUserAccessToken} from "../services/auth.service.js";
 
 //register controller
 export const register = async (req, res) => {
@@ -54,7 +55,45 @@ export const login = async (req, res) => {
             message: error.message,
         });
     }
+}
 
+//logout controller
+export const logout=async(req,res)=>{
+    try {
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: false,
+            sameSite: "lax",
+            path:"/", 
+        });
+        const result = await logoutUser();
+        return res.status(200).json({
+            success:true,
+            message:result.message,
+        })
+    } catch (error) {
+         return res.status(500).json({
+            success: false,
+            message: error.message || "Interval server Error",
+        });
+    }
+}
 
+//refreshing the access token
+export const refreshAccessToken=async(req,res)=>{
+    try {
+        const refreshToken=req.cookies.refreshToken;
+        const result = await refreshUserAccessToken(refreshToken)
 
+        return res.status(200).json({
+            success:true,
+            message:"Access token refreshed successfully",
+            accessToken:result.accessToken
+        })
+    } catch (error) {
+        return res.status(401).json({
+            success:false,
+            message:"Session expired. Please login again."
+        })
+    }
 }
