@@ -5,19 +5,29 @@ export const updateProfileService = async ({
   body,
   file,
 }) => {
-  const { phone, address } = body;
+  const {
+    phone,
+    addressLine1,
+    addressLine2,
+    city,
+    state,
+    country,
+    postalCode,
+    isGstRegistered,
+    gstNumber,
+  } = body;
 
- let logo = null;
+  let logo = null;
 
-if (file) {
-  const uploadedImage = await uploadToCloudinary(
-    file,
-    "company-logos"
-  );
+  if (file) {
+    const uploadedImage = await uploadToCloudinary(
+      file,
+      "company-logos"
+    );
 
-  logo = uploadedImage.secure_url;
-}
- 
+    logo = uploadedImage.secure_url;
+  }
+
 
   const updatedUser = await prisma.user.update({
     where: {
@@ -26,7 +36,21 @@ if (file) {
 
     data: {
       phone,
-      address,
+
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      country,
+      postalCode,
+
+      isGstRegistered:
+        isGstRegistered === "true",
+
+      gstNumber:
+        isGstRegistered === "true"
+          ? gstNumber
+          : null,
 
       ...(logo && {
         logo,
@@ -34,15 +58,27 @@ if (file) {
 
       profileCompleted: true,
     },
-
     select: {
       id: true,
       name: true,
       email: true,
+
       companyName: true,
+
       phone: true,
-      address: true,
+
+      addressLine1: true,
+      addressLine2: true,
+      city: true,
+      state: true,
+      country: true,
+      postalCode: true,
+
+      isGstRegistered: true,
+      gstNumber: true,
+
       logo: true,
+
       profileCompleted: true,
     },
   });
