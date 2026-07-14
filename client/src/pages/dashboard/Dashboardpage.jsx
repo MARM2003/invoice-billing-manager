@@ -9,7 +9,7 @@ const DashboardPage = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (user && !user.user.profilestatus) {
+    if (user && !user.user.profileCompleted) {
       navigate("/complete-profile", {
         replace: true,
       });
