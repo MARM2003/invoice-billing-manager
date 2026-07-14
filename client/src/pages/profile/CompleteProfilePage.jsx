@@ -1,4 +1,4 @@
-import CompleteProfileForm from "../../components/forms/CompleteProfileForm";
+import CompleteProfileForm from "../../components/profile/CompleteProfileForm";
 
 const CompleteProfilePage = () => {
   return <CompleteProfileForm />;
