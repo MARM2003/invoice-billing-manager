@@ -2,6 +2,8 @@
 
 A full-stack SaaS application for managing customers, invoices, subscriptions, and payments.
 
+This Saas tool is currently in development.
+
 ## Tech Stack
 
 ### Frontend
