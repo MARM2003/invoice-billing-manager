@@ -13,75 +13,142 @@ datasource db {
 }
 
 model User {
-  id                    String   @id @default(uuid())
+  id String @id @default(uuid())
 
   // Authentication
-  name                  String
-  email                 String   @unique
-  password              String
+  name     String
+  email    String @unique
+  password String
 
   // Business Information
-  companyName           String
-  phone                 String?
+  companyName String
+  phone       String?
 
-  addressLine1          String?
-  addressLine2          String?
-  city                  String?
-  state                 String?
-  country               String?
-  postalCode            String?
+  addressLine1 String?
+  addressLine2 String?
+  city         String?
+  state        String?
+  country      String?
+  postalCode   String?
 
-  isGstRegistered       Boolean  @default(false)
-  gstNumber             String?
-  panNumber             String?
+  isGstRegistered Boolean @default(false)
+  gstNumber       String?
+  panNumber       String?
 
   // Branding
-  logo                  String?
+  logo String?
 
   // Banking Information
-  bankName              String?
-  accountHolderName     String?
-  accountNumber         String?
-  ifscCode              String?
-  upiId                 String?
+  bankName          String?
+  accountHolderName String?
+  accountNumber     String?
+  ifscCode          String?
+  upiId             String?
 
   // Profile Status
-  profileCompleted      Boolean  @default(false)
+  profileCompleted Boolean @default(false)
 
-  customers             Customer[]
+  customers Customer[]
 
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  invoices Invoice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 //customer model
 model Customer {
-  id                String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  name              String
-  companyName       String?
-  email             String?
-  phone             String?
+  name        String
+  companyName String?
+  email       String?
+  phone       String?
 
-  gstNumber         String?
-  taxId             String?
+  gstNumber String?
+  taxId     String?
 
-  billingAddress    String?
-  shippingAddress   String?
+  billingAddress  String?
+  shippingAddress String?
 
-  notes             String?
+  notes String?
 
-  isActive          Boolean  @default(true)
+  isActive Boolean @default(true)
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  userId            String
-  user              User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Add on Day 4 when Invoice model is created
   // invoices       Invoice[]
+  invoices Invoice[]
 
   @@index([userId])
   @@index([userId, name])
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model Invoice {
+  id String @id @default(uuid())
+
+  invoiceNumber String
+
+  issueDate DateTime
+  dueDate   DateTime
+
+  status InvoiceStatus @default(DRAFT)
+
+  subtotal       Decimal @db.Decimal(10, 2)
+  taxAmount      Decimal @db.Decimal(10, 2)
+  discountAmount Decimal @db.Decimal(10, 2)
+  totalAmount    Decimal @db.Decimal(10, 2)
+
+  notes String?
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items InvoiceItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, invoiceNumber])
+  @@index([userId])
+  @@index([customerId])
+  @@index([status])
+}
+
+model InvoiceItem {
+  id String @id @default(uuid())
+
+  description String
+
+  quantity Int
+
+  unitPrice Decimal @db.Decimal(10, 2)
+
+  taxRate Decimal @db.Decimal(5, 2)
+
+  amount Decimal @db.Decimal(10, 2)
+
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([invoiceId])
 }
