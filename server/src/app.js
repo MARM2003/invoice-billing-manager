@@ -8,6 +8,7 @@ import authRoutes from "./routes/v1/auth.routes.js"
 import userRoutes from "./routes/v1/user.routes.js"
 //imported the customers route
 import customerRoutes from "./routes/v1/customer.routes.js"
+import invoiceRouter from "./routes/v1/invoice.routes.js"
 
 //creating the app
 const app = express();
@@ -36,7 +37,10 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes)
 
 //customers routes
-app.use("/api/v1/customers",customerRoutes)
+app.use("/api/v1/customers", customerRoutes)
+
+//invoice routes
+app.use("/api/v1/invoices", invoiceRouter)
 
 // Global error handler
 app.use(errorHandler);
