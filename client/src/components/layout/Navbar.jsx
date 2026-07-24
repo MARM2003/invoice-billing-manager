@@ -72,7 +72,7 @@ const Navbar = ({ handleDrawerToggle }) => {
               },
             }}
           >
-          {user && user.user?.companyName}
+          {user && user.user?.company_name}
           </Typography>
         </Box>
       </Toolbar>
