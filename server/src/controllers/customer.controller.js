@@ -63,7 +63,7 @@ export const updateCustomer = async (req, res, next) => {
         const userId = req.user.userId;
         const customerId = req.params.id;
         const body = req.body
-
+      
         const updatedCustomer = await updateCustomerService({ userId, customerId, body })
 
         return res.status(200).json({

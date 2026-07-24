@@ -166,19 +166,19 @@ export const updateCustomerService = async ({ userId, customerId, body }) => {
 }
 
 //delete the customer of a sepecific user
-export const deleteCustomerService=async({userId,customerId})=>{
+export const deleteCustomerService = async ({ userId, customerId }) => {
     try {
-        const customer=await prisma.customer.findFirst({
-            where:{
-                id:customerId,
+        const customer = await prisma.customer.findFirst({
+            where: {
+                id: customerId,
                 userId
             }
         })
-        if(!customer){throw new ApiError(404,"Customer not found")}
+        if (!customer) { throw new ApiError(404, "Customer not found") }
 
-        const deletedCustomer=await prisma.customer.delete({
-            where:{
-                id:customerId,
+        const deletedCustomer = await prisma.customer.delete({
+            where: {
+                id: customerId,
             }
         })
         return deletedCustomer
