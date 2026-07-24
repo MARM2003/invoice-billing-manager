@@ -88,6 +88,8 @@ export const createCustomerSchema = z.object({
         .trim()
         .max(1000, "Notes cannot exceed 1000 characters.")
     ),
+
+     isActive: z.boolean().optional(),
   }),
 });
 
