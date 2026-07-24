@@ -22,11 +22,6 @@ export const createInvoiceSchema = z.object({
                 .trim()
                 .uuid("Invalid customer ID."),
 
-            invoiceNumber: z
-                .string()
-                .trim()
-                .min(1, "Invoice number is required."),
-
             issueDate: z.coerce.date(),
 
             dueDate: z.coerce.date(),
