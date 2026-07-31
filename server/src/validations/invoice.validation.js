@@ -39,3 +39,5 @@ export const createInvoiceSchema = z.object({
             path: ["dueDate"],
         }),
 });
+
+export const updateInvoiceSchema = createInvoiceSchema;
