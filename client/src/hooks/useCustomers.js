@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import useDebounce from "./useDebounce";
 import {
   getCustomersService,
   createCustomerService,
@@ -18,13 +19,24 @@ const useCustomers = () => {
     update: false,
     delete: false,
   });
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 500);
 
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
     pageSize: 10,
   });
+  const handleSearchChange = (value) => {
+    setSearch(value);
+
+    setPaginationModel((prev) => ({
+      ...prev,
+      page: 0,
+    }));
+  };
+
+
 
   const [totalCustomers, setTotalCustomers] = useState(0);
 
@@ -35,15 +47,14 @@ const useCustomers = () => {
       const response = await getCustomersService({
         page: paginationModel.page + 1,
         limit: paginationModel.pageSize,
-        search,
+        search: debouncedSearch,
       });
-
       setCustomers(response.data.customers);
       setTotalCustomers(response.data.pagination.totalCustomers);
     } finally {
       setLoading(false);
     }
-  }, [paginationModel, search]);
+  }, [paginationModel, debouncedSearch]);
 
   useEffect(() => {
     fetchCustomers();
@@ -175,7 +186,7 @@ const useCustomers = () => {
     loading,
 
     search,
-    setSearch,
+    handleSearchChange,
 
     paginationModel,
     setPaginationModel,
