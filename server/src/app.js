@@ -9,6 +9,7 @@ import userRoutes from "./routes/v1/user.routes.js"
 //imported the customers route
 import customerRoutes from "./routes/v1/customer.routes.js"
 import invoiceRouter from "./routes/v1/invoice.routes.js"
+import dashboardRoutes from "./routes/v1/dashboard.routes.js"
 
 //creating the app
 const app = express();
@@ -41,6 +42,9 @@ app.use("/api/v1/customers", customerRoutes)
 
 //invoice routes
 app.use("/api/v1/invoices", invoiceRouter)
+
+//dashboard summary
+app.use("/api/v1/dashboardSummary", dashboardRoutes)
 
 // Global error handler
 app.use(errorHandler);
