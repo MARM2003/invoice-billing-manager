@@ -16,7 +16,7 @@ const CustomersPage = () => {
     loading,
 
     search,
-    setSearch,
+    handleSearchChange,
 
     paginationModel,
     setPaginationModel,
@@ -53,7 +53,7 @@ const CustomersPage = () => {
 
         <CustomerToolbar
           search={search}
-          onSearchChange={setSearch}
+          onSearchChange={handleSearchChange}
         />
 
         <CustomerTable
