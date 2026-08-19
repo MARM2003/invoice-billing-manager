@@ -1,25 +1,56 @@
+import { useEffect, useState } from "react";
+import { Box, Typography, CircularProgress, Alert } from "@mui/material";
 
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-
-import useAuth from "../../hooks/useAuth";
+import { getDashboardSummaryService } from "../../services/dashboard.service.js";
+import DashboardSummaryCards from "./DashboardSummaryCards.jsx";
+import MonthlyRevenueChart from "./MonthlyRevenueChart.jsx";
+import DashboardSkeleton from "./DashboardSkeleton.jsx";
 
 const DashboardPage = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (user && !user.user.profilestatus) {
-      navigate("/complete-profile", {
-        replace: true,
-      });
-    }
-  }, [user, navigate]);
+    const fetchDashboardSummary = async () => {
+      try {
+        setLoading(true);
+
+        const response = await getDashboardSummaryService();
+        setDashboardData(response.data);
+      } catch (err) {
+        setError(
+          err.response?.data?.message ||
+          "Failed to load dashboard."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardSummary();
+  }, []);
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <Alert severity="error">
+        {error}
+      </Alert>
+    );
+  }
 
   return (
-    <>
-      <h1>Dashboard</h1>
-    </>
+    <Box p={3}>
+      <Typography variant="h4" fontWeight={600} mb={3}>
+        Dashboard
+      </Typography>
+      <DashboardSummaryCards summary={dashboardData.summary} />
+      <MonthlyRevenueChart monthlyRevenue={dashboardData.monthlyRevenue} />
+    </Box>
   );
 };
 
