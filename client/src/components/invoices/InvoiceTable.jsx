@@ -17,7 +17,8 @@ import {
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
-
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import EmailIcon from "@mui/icons-material/Email";
 import InvoiceStatusChip from "./InvoiceStatusChip.jsx";
 import { formatCurrency } from "../../utils/currency.js";
 import { formatDate } from "../../utils/date.js";
@@ -42,6 +43,8 @@ const InvoiceTable = ({
     onView,
     onEdit,
     onDelete,
+    onInvoicePdf,
+    onSendInvoiceEmail
 }) => {
     return (
         <Paper elevation={2}>
@@ -114,6 +117,20 @@ const InvoiceTable = ({
                                             </IconButton>
                                         </Tooltip>
 
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => onInvoicePdf(invoice.id)}
+                                            title="Preview Invoice PDF"
+                                        >
+                                            <PictureAsPdfIcon fontSize="small" />
+                                        </IconButton>
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => onSendInvoiceEmail(invoice.id)}
+                                            title="Send Invoice"
+                                        >
+                                            <EmailIcon fontSize="small" />
+                                        </IconButton>
                                         <Tooltip title="Edit Invoice">
                                             <IconButton
                                                 color="warning"
