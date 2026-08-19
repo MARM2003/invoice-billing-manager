@@ -1,5 +1,11 @@
 import prisma from "../prismaClient/prismaClient.js";
 import ApiError from "../utils/ApiError.js";
+
+import invoiceTemplate from "../utils/pdf/invoiceTemplate.js";
+import generateInvoicePdf from "../utils/pdf/generateInvoicePdf.js";
+
+import { sendEmail } from "./email.service.js";
+
 export const createInvoiceService = async (userId, invoiceData) => {
     const {
         customerId,
@@ -320,3 +326,91 @@ export const deleteInvoiceService = async (invoiceId, userId) => {
 
     return deletedInvoice;
 }
+
+export const generateInvoicePdfService = async (invoiceId, userId) => {
+    const invoice = await prisma.invoice.findFirst({
+        where: {
+            id: invoiceId,
+            userId,
+        },
+        include: {
+            customer: true,
+            items: true,
+            user: true,
+        },
+    });
+
+    if (!invoice) {
+        throw new ApiError(404, "Invoice not found.");
+    }
+
+    const html = invoiceTemplate(invoice);
+
+    const pdfBuffer = await generateInvoicePdf(html);
+
+    return pdfBuffer;
+};
+
+export const sendInvoiceService = async (invoiceId, userId) => {
+    const invoice = await prisma.invoice.findFirst({
+        where: {
+            id: invoiceId,
+            userId,
+        },
+        include: {
+            customer: true,
+            items: true,
+            user: true,
+        },
+    });
+
+    if (!invoice) {
+        throw new ApiError(404, "Invoice not found.");
+    }
+
+    if (!invoice.customer?.email) {
+        throw new ApiError(
+            400,
+            "Customer email address is not available."
+        );
+    }
+
+    const html = invoiceTemplate(invoice);
+
+    const pdfBuffer = await generateInvoicePdf(html);
+
+    await sendEmail({
+        to: invoice.customer.email,
+        subject: `Invoice ${invoice.invoiceNumber} from ${invoice.user.companyName}`,
+        html: `
+            <p>Hello ${invoice.customer.name},</p>
+
+            <p>
+                Please find your invoice
+                <strong>${invoice.invoiceNumber}</strong>
+                attached to this email.
+            </p>
+
+            <p>
+                Thank you for your business.
+            </p>
+
+            <p>
+                Regards,<br />
+                ${invoice.user.companyName}
+            </p>
+        `,
+        attachments: [
+            {
+                filename: `invoice-${invoice.invoiceNumber}.pdf`,
+                content: pdfBuffer,
+                contentType: "application/pdf",
+            },
+        ],
+    });
+
+    return {
+        invoiceId: invoice.id,
+        recipient: invoice.customer.email,
+    };
+};
