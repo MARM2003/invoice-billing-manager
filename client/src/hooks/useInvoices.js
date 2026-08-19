@@ -1,10 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
-import { getInvoicesService, getInvoiceByIdService, deleteInvoiceService } from "../services/invoice.service.js";
+import { getInvoicesService, getInvoiceByIdService, deleteInvoiceService, invoicePdfService, sendInvoiceService } from "../services/invoice.service.js";
 import useDebounce from "./useDebounce.js";
 import { toast } from "react-toastify";
+
 export const useInvoices = () => {
   // Invoice data
   const [invoices, setInvoices] = useState([]);
+
+  //toast
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   // UI state
   const [loading, setLoading] = useState(false);
@@ -157,6 +165,50 @@ export const useInvoices = () => {
       setLoading(false);
     }
   };
+
+  //invoice pdf 
+  const handleInvoicePdf = async (invoiceId) => {
+    try {
+      const response = await invoicePdfService(invoiceId);
+
+      const pdfBlob = new Blob([response.data], {
+        type: "application/pdf",
+      });
+
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+
+      window.open(pdfUrl, "_blank");
+
+      // Release the object URL after some time
+      setTimeout(() => {
+        URL.revokeObjectURL(pdfUrl);
+      }, 10000);
+    } catch (error) {
+      console.error("Failed to preview invoice PDF:", error);
+    }
+  };
+
+  const handleSendInvoiceEmail = async (invoiceId) => {
+    try {
+      const response = await sendInvoiceService(invoiceId);
+
+      setToast({
+        open: true,
+        message: response.data.message || "Invoice sent successfully.",
+        severity: "success",
+      });
+    } catch (error) {
+      console.error("Failed sending email:", error);
+
+      setToast({
+        open: true,
+        message: "Failed to send invoice. Please try again.",
+        severity: "error",
+      });
+    }
+  };
+
+
   return {
     // Data
     invoices,
@@ -200,5 +252,14 @@ export const useInvoices = () => {
     openDeleteDialog,
     closeDeleteDialog,
     deleteInvoice,
+
+    //invoice pdf
+    handleInvoicePdf,
+
+    //send email handler
+    handleSendInvoiceEmail,
+
+    //toast
+    toast
   };
 };
