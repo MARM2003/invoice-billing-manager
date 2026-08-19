@@ -32,3 +32,20 @@ export const deleteInvoiceAPI = async (invoiceId) => {
 
     return response.data;
 }
+
+//invoice pdf
+export const getInvoicePdfAPI = async (invoiceId) => {
+    const response = await api.get(
+        `/invoices/${invoiceId}/pdf`,
+        {
+            responseType: "blob",
+        }
+    );
+
+    return response;
+};
+
+//email send api
+export const sendInvoiceAPI = async (invoiceId) => {
+    return await api.post(`/invoices/${invoiceId}/send`);
+};
