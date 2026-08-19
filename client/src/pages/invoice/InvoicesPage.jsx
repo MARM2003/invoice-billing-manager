@@ -40,6 +40,8 @@ const InvoicesPage = () => {
     openDeleteDialog,
     closeDeleteDialog,
     deleteInvoice,
+    handleInvoicePdf,
+    handleSendInvoiceEmail,
   } = useInvoices();
 
   // Delete Invoice (Temporary)
@@ -108,6 +110,8 @@ const InvoicesPage = () => {
           onView={openDrawer}
           onEdit={openEditDialog}
           onDelete={openDeleteDialog}
+          onInvoicePdf={handleInvoicePdf}
+          onSendInvoiceEmail={handleSendInvoiceEmail}
         />
       )}
 
