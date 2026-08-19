@@ -1,5 +1,5 @@
 import { success } from "zod";
-import { createInvoiceService, getInvoicesService, getInvoiceByIdService, updateInvoiceService, deleteInvoiceService } from "../services/invoice.service.js";
+import { createInvoiceService, getInvoicesService, getInvoiceByIdService, updateInvoiceService, deleteInvoiceService, generateInvoicePdfService, sendInvoiceService } from "../services/invoice.service.js";
 
 export const createInvoice = async (req, res, next) => {
   try {
@@ -89,3 +89,44 @@ export const deleteInvoice = async (req, res, next) => {
     next(error)
   }
 }
+
+export const invoicePdf = async (req, res, next) => {
+  try {
+    const invoiceId = req.params.id;
+    const userId = req.user.userId;
+
+    const pdfBuffer = await generateInvoicePdfService(
+      invoiceId,
+      userId
+    );
+
+    res.setHeader("Content-Type", "application/pdf");
+
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="invoice-${invoiceId}.pdf"`
+    );
+
+    return res.status(200).send(pdfBuffer);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const sendInvoice = async (req, res, next) => {
+  try {
+    const invoiceId = req.params.id;
+    const userId = req.user.userId;
+
+    const result = await sendInvoiceService(invoiceId, userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Invoice sent successfully.",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
