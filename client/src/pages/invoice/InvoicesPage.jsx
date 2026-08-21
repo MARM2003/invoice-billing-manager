@@ -10,6 +10,10 @@ import InvoiceDialog from "../../components/invoices/InvoiceDialog.jsx";
 import InvoiceDrawer from "../../components/invoices/InvoiceDrawer.jsx";
 import InvoiceDeleteDialog from "../../components/invoices/InvoiceDeleteDialog.jsx";
 import { useInvoices } from "../../hooks/useInvoices.js";
+import {
+  Alert,
+  Snackbar,
+} from "@mui/material";
 
 const InvoicesPage = () => {
   const {
@@ -42,6 +46,8 @@ const InvoicesPage = () => {
     deleteInvoice,
     handleInvoicePdf,
     handleSendInvoiceEmail,
+    toast,
+    handleCloseToast,
   } = useInvoices();
 
   // Delete Invoice (Temporary)
@@ -139,6 +145,25 @@ const InvoicesPage = () => {
         onDelete={deleteInvoice}
         loading={loading}
       />
+
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={4000}
+        onClose={handleCloseToast}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
+      >
+        <Alert
+          onClose={handleCloseToast}
+          severity={toast.severity}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {toast.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

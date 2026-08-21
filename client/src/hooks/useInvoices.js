@@ -191,7 +191,6 @@ export const useInvoices = () => {
   const handleSendInvoiceEmail = async (invoiceId) => {
     try {
       const response = await sendInvoiceService(invoiceId);
-
       setToast({
         open: true,
         message: response.data.message || "Invoice sent successfully.",
@@ -208,6 +207,13 @@ export const useInvoices = () => {
     }
   };
 
+
+  const handleCloseToast = () => {
+    setToast((prev) => ({
+      ...prev,
+      open: false,
+    }));
+  };
 
   return {
     // Data
@@ -260,6 +266,7 @@ export const useInvoices = () => {
     handleSendInvoiceEmail,
 
     //toast
-    toast
+    toast,
+    handleCloseToast,
   };
 };
