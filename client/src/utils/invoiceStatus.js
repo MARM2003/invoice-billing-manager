@@ -19,4 +19,8 @@ export const INVOICE_STATUS = {
     label: "Cancelled",
     color: "secondary",
   },
+  PARTIALLY_PAID: {
+    label: "Partially-Paid",
+    color: "warning"
+  }
 };
