@@ -22,6 +22,8 @@ import EmailIcon from "@mui/icons-material/Email";
 import InvoiceStatusChip from "./InvoiceStatusChip.jsx";
 import { formatCurrency } from "../../utils/currency.js";
 import { formatDate } from "../../utils/date.js";
+import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 
 const TABLE_COLUMNS = [
     "Invoice #",
@@ -44,7 +46,9 @@ const InvoiceTable = ({
     onEdit,
     onDelete,
     onInvoicePdf,
-    onSendInvoiceEmail
+    onSendInvoiceEmail,
+    onRecordPayment,
+    onPaymentHistory,
 }) => {
     return (
         <Paper elevation={2}>
@@ -148,6 +152,23 @@ const InvoiceTable = ({
                                                 <DeleteOutlineOutlinedIcon />
                                             </IconButton>
                                         </Tooltip>
+
+                                        <Tooltip title="Record Payment">
+                                            <IconButton
+                                                color="success"
+                                                onClick={() => onRecordPayment(invoice)}
+                                            >
+                                                <PaymentsOutlinedIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Payment History">
+                                            <IconButton
+                                                color="info"
+                                                onClick={() => onPaymentHistory(invoice)}
+                                            >
+                                                <HistoryOutlinedIcon />
+                                            </IconButton>
+                                        </Tooltip>
                                     </Stack>
                                 </TableCell>
                             </TableRow>
@@ -186,6 +207,10 @@ InvoiceTable.propTypes = {
     onView: PropTypes.func.isRequired,
     onEdit: PropTypes.func.isRequired,
     onDelete: PropTypes.func.isRequired,
+
+    onRecordPayment: PropTypes.func.isRequired,
+
+    onPaymentHistory: PropTypes.func.isRequired,
 };
 
 export default InvoiceTable;
