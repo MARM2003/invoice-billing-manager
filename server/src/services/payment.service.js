@@ -116,6 +116,111 @@ export const createManualPayment = async ({
     return result;
 };
 
+// export const getPayments = async ({
+//     userId,
+//     page = 1,
+//     limit = 10,
+//     search = "",
+//     status,
+//     method,
+// }) => {
+//     const skip = (page - 1) * limit;
+
+//     const where = {
+//         userId,
+//     };
+
+//     // Filter by payment status
+//     if (status) {
+//         where.status = status;
+//     }
+
+//     // Filter by payment method
+//     if (method) {
+//         where.method = method;
+//     }
+
+//     // Search by invoice number, customer name, or transaction/reference
+//     if (search.trim()) {
+//         where.OR = [
+//             {
+//                 invoice: {
+//                     invoiceNumber: {
+//                         contains: search.trim(),
+//                         mode: "insensitive",
+//                     },
+//                 },
+//             },
+//             {
+//                 customer: {
+//                     name: {
+//                         contains: search.trim(),
+//                         mode: "insensitive",
+//                     },
+//                 },
+//             },
+//             {
+//                 transactionId: {
+//                     contains: search.trim(),
+//                     mode: "insensitive",
+//                 },
+//             },
+//             {
+//                 reference: {
+//                     contains: search.trim(),
+//                     mode: "insensitive",
+//                 },
+//             },
+//         ];
+//     }
+
+//     const [payments, totalPayments] = await Promise.all([
+//         prisma.payment.findMany({
+//             where,
+//             skip,
+//             take: limit,
+//             orderBy: {
+//                 paymentDate: "desc",
+//             },
+//             include: {
+//                 invoice: {
+//                     select: {
+//                         id: true,
+//                         invoiceNumber: true,
+//                         totalAmount: true,
+//                     },
+//                 },
+//                 customer: {
+//                     select: {
+//                         id: true,
+//                         name: true,
+//                         companyName: true,
+//                     },
+//                 },
+//             },
+//         }),
+
+//         prisma.payment.count({
+//             where,
+//         }),
+//     ]);
+
+//     const totalPages = Math.ceil(totalPayments / limit);
+
+//     return {
+//         payments,
+//         pagination: {
+//             page,
+//             limit,
+//             totalPayments,
+//             totalPages,
+//             hasNextPage: page < totalPages,
+//             hasPreviousPage: page > 1,
+//         },
+//     };
+// };
+
+
 export const getPayments = async ({
     userId,
     page = 1,
@@ -123,6 +228,8 @@ export const getPayments = async ({
     search = "",
     status,
     method,
+    startDate,
+    endDate,
 }) => {
     const skip = (page - 1) * limit;
 
@@ -130,23 +237,62 @@ export const getPayments = async ({
         userId,
     };
 
+    // -----------------------------------------
     // Filter by payment status
+    // -----------------------------------------
+
     if (status) {
         where.status = status;
     }
 
+    // -----------------------------------------
     // Filter by payment method
+    // -----------------------------------------
+
     if (method) {
         where.method = method;
     }
 
-    // Search by invoice number, customer name, or transaction/reference
+    // -----------------------------------------
+    // Filter by payment date
+    // -----------------------------------------
+
+    if (startDate || endDate) {
+        where.paymentDate = {};
+
+        if (startDate) {
+            where.paymentDate.gte = new Date(
+                `${startDate}T00:00:00.000Z`
+            );
+        }
+
+        if (endDate) {
+            const end = new Date(
+                `${endDate}T00:00:00.000Z`
+            );
+
+            end.setUTCDate(end.getUTCDate() + 1);
+
+            where.paymentDate.lt = end;
+        }
+    }
+
+    // -----------------------------------------
+    // Search
+    // Invoice number
+    // Customer name
+    // Transaction ID
+    // Reference
+    // -----------------------------------------
+
     if (search.trim()) {
+        const searchValue = search.trim();
+
         where.OR = [
             {
                 invoice: {
                     invoiceNumber: {
-                        contains: search.trim(),
+                        contains: searchValue,
                         mode: "insensitive",
                     },
                 },
@@ -154,61 +300,76 @@ export const getPayments = async ({
             {
                 customer: {
                     name: {
-                        contains: search.trim(),
+                        contains: searchValue,
                         mode: "insensitive",
                     },
                 },
             },
             {
                 transactionId: {
-                    contains: search.trim(),
+                    contains: searchValue,
                     mode: "insensitive",
                 },
             },
             {
                 reference: {
-                    contains: search.trim(),
+                    contains: searchValue,
                     mode: "insensitive",
                 },
             },
         ];
     }
 
-    const [payments, totalPayments] = await Promise.all([
-        prisma.payment.findMany({
-            where,
-            skip,
-            take: limit,
-            orderBy: {
-                paymentDate: "desc",
-            },
-            include: {
-                invoice: {
-                    select: {
-                        id: true,
-                        invoiceNumber: true,
-                        totalAmount: true,
+    // -----------------------------------------
+    // Fetch payments + total count
+    // -----------------------------------------
+
+    const [payments, totalPayments] =
+        await Promise.all([
+            prisma.payment.findMany({
+                where,
+                skip,
+                take: limit,
+
+                orderBy: {
+                    paymentDate: "desc",
+                },
+
+                include: {
+                    invoice: {
+                        select: {
+                            id: true,
+                            invoiceNumber: true,
+                            totalAmount: true,
+                        },
+                    },
+
+                    customer: {
+                        select: {
+                            id: true,
+                            name: true,
+                            companyName: true,
+                        },
                     },
                 },
-                customer: {
-                    select: {
-                        id: true,
-                        name: true,
-                        companyName: true,
-                    },
-                },
-            },
-        }),
+            }),
 
-        prisma.payment.count({
-            where,
-        }),
-    ]);
+            prisma.payment.count({
+                where,
+            }),
+        ]);
 
-    const totalPages = Math.ceil(totalPayments / limit);
+    // -----------------------------------------
+    // Pagination
+    // -----------------------------------------
+
+    const totalPages = Math.ceil(
+        totalPayments / limit
+    );
 
     return {
         payments,
+
         pagination: {
             page,
             limit,
@@ -219,7 +380,6 @@ export const getPayments = async ({
         },
     };
 };
-
 export const getPaymentById = async ({
     userId,
     paymentId,
