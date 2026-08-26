@@ -3,6 +3,10 @@ import { validate } from "../../middleware/validate.middleware.js"
 import authMiddleware from "../../middleware/auth.middleware.js"
 import { createInvoiceSchema, updateInvoiceSchema } from "../../validations/invoice.validation.js"
 import { createInvoice, getInvoices, getInvoiceById, updateInvoice, deleteInvoice, invoicePdf, sendInvoice } from "../../controllers/invoice.controller.js"
+
+import {
+  getInvoicePaymentsController,
+} from "../../controllers/payment.controller.js";
 const router = express.Router();
 
 
@@ -24,4 +28,10 @@ router.delete("/:id", authMiddleware, deleteInvoice)
 router.get("/:id/pdf", authMiddleware, invoicePdf)
 
 router.post("/:id/send", authMiddleware, sendInvoice);
+
+router.get(
+    "/:id/payments",
+    authMiddleware,
+    getInvoicePaymentsController
+);
 export default router;
