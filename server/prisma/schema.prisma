@@ -200,10 +200,14 @@ enum PaymentStatus {
 }
 
 enum PaymentMethod {
-  STRIPE
   CASH
   UPI
   BANK_TRANSFER
   CARD
   OTHER
+
+  STRIPE
+  STRIPE_CARD
+  STRIPE_UPI
+  STRIPE_BANK_TRANSFER
 }
