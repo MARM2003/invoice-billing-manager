@@ -1,4 +1,4 @@
-import { updateProfileService, getUserProfileService, updateUserProfileService } from "../services/user.service.js";
+import { updateProfileService, getUserProfileService, updateUserProfileService, updateUserLogoService } from "../services/user.service.js";
 
 export const updateProfile = async (req, res) => {
   try {
@@ -58,6 +58,25 @@ export const updateUserProfile = async (
     return res.status(200).json({
       success: true,
       message: "User profile updated successfully",
+      data: updatedUser,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateUserLogo = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+
+    const updatedUser = await updateUserLogoService(
+      userId,
+      req.file
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile logo updated successfully",
       data: updatedUser,
     });
   } catch (error) {
