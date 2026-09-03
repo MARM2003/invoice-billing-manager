@@ -7,6 +7,30 @@ export const createInvoicePaymentLinkService = async ({
     invoiceId,
     userId,
 }) => {
+
+    const user = await prisma.user.findUnique({
+        where: {
+            id: userId,
+        },
+        select: {
+            accountNumber: true,
+            accountHolderName: true,
+            ifscCode: true,
+        },
+    });
+
+    if (!user) {
+        throw new ApiError(404, "User not found")
+    }
+
+    if (
+        !user.accountNumber ||
+        !user.accountHolderName ||
+        !user.ifscCode
+    ) {
+        throw new ApiError(400, "Please fill in your bank details in the Settings page before creating a payment link.")
+    }
+
     const invoice = await prisma.invoice.findFirst({
         where: {
             id: invoiceId,
