@@ -13,4 +13,12 @@ export const getProfileAPI = async () => {
 export const updateUserProfileAPI = async (data) => {
     return api.put("/users/user-profile", data)
 }
+
+export const updateUserLogoAPI = async (formData) => {
+    return api.put("/users/user-logo", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+};
 export default updateProfileApi
