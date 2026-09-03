@@ -206,8 +206,5 @@ enum PaymentMethod {
   CARD
   OTHER
 
-  STRIPE
   STRIPE_CARD
-  STRIPE_UPI
-  STRIPE_BANK_TRANSFER
 }
