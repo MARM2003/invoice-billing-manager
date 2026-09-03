@@ -221,3 +221,47 @@ export const updateUserProfileService = async (
 
   return updatedUser;
 };
+
+
+export const updateUserLogoService = async (userId, file) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      id: true,
+      logo: true,
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found")
+  }
+  let logoUpdate = null
+  if (file) {
+    const uploadedImage = await uploadToCloudinary(
+      file,
+      "company-logos"
+    );
+
+    logoUpdate = uploadedImage.secure_url;
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      logo: logoUpdate,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      companyName: true,
+      logo: true,
+    },
+  });
+
+  return updatedUser;
+};
