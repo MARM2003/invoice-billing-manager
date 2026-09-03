@@ -14,16 +14,16 @@ import BusinessInformation from "../../components/settings/BusinessInformation.j
 import AddressInformation from "../../components/settings/AddressInformation.jsx";
 import PaymentInformation from "../../components/settings/PaymentInformation.jsx";
 import EditProfileModal from "../../components/settings/EditProfileModal.jsx";
-
+import UpdateLogoModal from "../../components/settings/UpdateLogoModal.jsx";
 import { getProfile } from "../../services/user.service.js";
 
 const SettingsPage = () => {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [editProfileOpen, setEditProfileOpen] = useState(false);
+    // const [editProfileOpen, setEditProfileOpen] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
-
+    const [logoModalOpen, setLogoModalOpen] = useState(false);
 
     const handleProfileUpdated = (updatedProfile) => {
 
@@ -128,6 +128,7 @@ const SettingsPage = () => {
                 <ProfileHeader
                     profile={profile}
                     onEditProfile={() => setEditModalOpen(true)}
+                    onUpdateLogo={() => setLogoModalOpen(true)}
                 />
                 <PersonalInformation profile={profile} />
 
@@ -140,6 +141,13 @@ const SettingsPage = () => {
                 <EditProfileModal
                     open={editModalOpen}
                     onClose={() => setEditModalOpen(false)}
+                    profile={profile}
+                    onProfileUpdated={handleProfileUpdated}
+                />
+
+                <UpdateLogoModal
+                    open={logoModalOpen}
+                    onClose={() => setLogoModalOpen(false)}
                     profile={profile}
                     onProfileUpdated={handleProfileUpdated}
                 />
