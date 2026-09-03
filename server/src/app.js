@@ -11,8 +11,8 @@ import customerRoutes from "./routes/v1/customer.routes.js"
 import invoiceRouter from "./routes/v1/invoice.routes.js"
 import dashboardRoutes from "./routes/v1/dashboard.routes.js"
 import paymentRoutes from "./routes/v1/payment.routes.js";
-
 import stipeInvoiceRoute from "./routes/v1/stripe.routes.js"
+
 //creating the app
 const app = express();
 
@@ -21,6 +21,11 @@ app.use(cors({
   origin: "http://localhost:5173",
   credentials: true,
 }));
+
+app.use(
+  "/api/v1/stripe-payment",
+  express.raw({ type: "application/json" })
+);
 //incoming json parse
 app.use(express.json());
 //cookie-parser
