@@ -45,10 +45,16 @@ export const createInvoicePaymentLinkService = async ({
         throw new ApiError(404, "Invoice not found");
     }
 
-    if (invoice.status === "PAID") {
+    // if (invoice.status === "PAID") {
+    //     throw new ApiError(
+    //         400,
+    //         "Payment link cannot be created because this invoice is already paid."
+    //     );
+    // }
+    if (["PAID", "CANCELLED"].includes(invoice.status)) {
         throw new ApiError(
             400,
-            "Payment link cannot be created because this invoice is already paid."
+            "Payment link cannot be created for this invoice."
         );
     }
     if (Number(invoice.totalAmount) <= 0) {
@@ -57,7 +63,11 @@ export const createInvoicePaymentLinkService = async ({
 
         );
     }
+    const expiryMinutes = Number(
+        process.env.STRIPE_PAYMENT_LINK_EXPIRY_MINUTES || 20
+    );
 
+    const expiresAt = Math.floor(Date.now() / 1000) + expiryMinutes * 60;
     const session = await stripe.checkout.sessions.create({
         mode: "payment",
 
@@ -78,6 +88,8 @@ export const createInvoicePaymentLinkService = async ({
                 quantity: 1,
             },
         ],
+
+        expires_at: expiresAt,
 
         customer_email: invoice.customer.email,
 
@@ -100,80 +112,6 @@ export const createInvoicePaymentLinkService = async ({
         sessionId: session.id,
     };
 };
-
-// export const handleStripeWebhookService = async (event) => {
-
-//     if (event.type !== "checkout.session.completed") {
-//         return;
-//     }
-
-//     const session = event.data.object;
-
-//     const {
-//         invoiceId,
-//         customerId,
-//         userId,
-//     } = session.metadata;
-
-//     if (!invoiceId || !customerId || !userId) {
-//         throw new ApiError(
-//             400,
-//             "Missing payment metadata"
-//         );
-//     }
-//     const invoice = await prisma.invoice.findFirst({
-//         where: {
-//             id: invoiceId,
-//             userId,
-//         },
-//     });
-//     if (!invoice) {
-//         throw new ApiError(
-//             404,
-//             "Invoice not found"
-//         );
-//     }
-//     const existingPayment = await prisma.payment.findUnique({
-//         where: {
-//             stripeCheckoutSessionId: session.id,
-//         },
-//     });
-
-//     if (existingPayment) {
-//         return;
-//     }
-
-//     const amount = session.amount_total / 100;
-
-//     const payment = await prisma.payment.create({
-//         data: {
-//             amount,
-//             paymentDate: new Date(),
-
-//             method: "STRIPE_CARD",
-//             status: "PAID",
-
-//             stripeCheckoutSessionId: session.id,
-//             stripePaymentIntentId: session.payment_intent,
-
-//             invoiceId,
-//             customerId,
-//             userId,
-//         },
-//     });
-
-//     await prisma.invoice.update({
-//         where: {
-//             id: invoiceId,
-//         },
-//         data: {
-//             status: "PAID",
-//         },
-//     });
-
-//     // Payment processing will go here
-// };
-
 
 export const handleStripeWebhookService = async (event) => {
     if (event.type !== "checkout.session.completed") {
