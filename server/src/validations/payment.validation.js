@@ -15,7 +15,7 @@ export const createManualPaymentSchema = z.object({
             .positive("Payment amount must be greater than 0"),
 
         method: z.enum(
-            ["CASH", "UPI", "BANK_TRANSFER"],
+            ["CASH", "UPI", "BANK_TRANSFER", "CARD", "OTHER"],
             {
                 errorMap: () => ({
                     message: "Payment method must be CASH, UPI, or BANK_TRANSFER",
