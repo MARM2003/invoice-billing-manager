@@ -64,7 +64,7 @@ export const createInvoicePaymentLinkService = async ({
         );
     }
     const expiryMinutes = Number(
-        process.env.STRIPE_PAYMENT_LINK_EXPIRY_MINUTES || 20
+        process.env.STRIPE_PAYMENT_LINK_EXPIRY_MINUTES || 30
     );
 
     const expiresAt = Math.floor(Date.now() / 1000) + expiryMinutes * 60;
@@ -114,118 +114,192 @@ export const createInvoicePaymentLinkService = async ({
 };
 
 export const handleStripeWebhookService = async (event) => {
-    if (event.type !== "checkout.session.completed") {
-        return;
-    }
+    switch (event.type) {
+        case "checkout.session.completed": {
+            const session = event.data.object;
 
-    const session = event.data.object;
+            // Payment was not actually completed
+            if (session.payment_status !== "paid") {
+                return;
+            }
 
-    // 1. Verify payment
-    if (session.payment_status !== "paid") {
-        return;
-    }
-
-    // 2. Get metadata
-    const {
-        invoiceId,
-        customerId,
-        userId,
-    } = session.metadata;
-
-    // 3. Validate metadata
-    if (!invoiceId || !customerId || !userId) {
-        throw new ApiError(
-            400,
-            "Missing payment metadata"
-        );
-    }
-
-    // 4. Find invoice
-    const invoice = await prisma.invoice.findFirst({
-        where: {
-            id: invoiceId,
-            userId,
-        },
-    });
-
-    if (!invoice) {
-        throw new ApiError(
-            404,
-            "Invoice not found"
-        );
-    }
-
-    // 5. Prevent duplicate payment
-    const existingPayment = await prisma.payment.findUnique({
-        where: {
-            stripeCheckoutSessionId: session.id,
-        },
-    });
-
-    if (existingPayment) {
-        return;
-    }
-
-    // // 6. Create payment
-    // await prisma.payment.create({
-    //     data: {
-    //         amount: session.amount_total / 100,
-    //         paymentDate: new Date(),
-
-    //         method: "STRIPE_CARD",
-    //         status: "PAID",
-
-    //         stripeCheckoutSessionId: session.id,
-    //         stripePaymentIntentId: session.payment_intent,
-
-    //         invoiceId,
-    //         customerId,
-    //         userId,
-    //     },
-    // });
-
-    // // 7. Mark invoice as paid
-    // await prisma.invoice.update({
-    //     where: {
-    //         id: invoiceId,
-    //     },
-    //     data: {
-    //         status: "PAID",
-    //     },
-    // });
-
-    const result = await prisma.$transaction(async (tx) => {
-        const payment = await tx.payment.create({
-            data: {
-                amount: session.amount_total / 100,
-                paymentDate: new Date(),
-
-                method: "STRIPE_CARD",
-                status: "PAID",
-
-                stripeCheckoutSessionId: session.id,
-                stripePaymentIntentId: session.payment_intent,
-
+            const {
                 invoiceId,
                 customerId,
                 userId,
-            },
-        });
+            } = session.metadata;
 
-        const updatedInvoice = await tx.invoice.update({
-            where: {
-                id: invoiceId,
-            },
-            data: {
-                status: "PAID",
-            },
-        });
+            if (!invoiceId || !customerId || !userId) {
+                throw new ApiError(
+                    400,
+                    "Missing payment metadata"
+                );
+            }
 
-        return {
-            payment,
-            invoice: updatedInvoice,
-        };
-    });
+            const invoice = await prisma.invoice.findFirst({
+                where: {
+                    id: invoiceId,
+                    userId,
+                },
+            });
 
-    return result
+            if (!invoice) {
+                throw new ApiError(
+                    404,
+                    "Invoice not found"
+                );
+            }
+
+            // Prevent duplicate payment processing
+            const existingPayment =
+                await prisma.payment.findUnique({
+                    where: {
+                        stripeCheckoutSessionId: session.id,
+                    },
+                });
+
+            if (existingPayment) {
+                return;
+            }
+
+            const result = await prisma.$transaction(
+                async (tx) => {
+                    const payment = await tx.payment.create({
+                        data: {
+                            amount: session.amount_total / 100,
+                            paymentDate: new Date(),
+                            method: "STRIPE_CARD",
+                            status: "PAID",
+                            stripeCheckoutSessionId: session.id,
+                            stripePaymentIntentId:
+                                session.payment_intent,
+                            invoiceId,
+                            customerId,
+                            userId,
+                        },
+                    });
+
+                    const updatedInvoice =
+                        await tx.invoice.update({
+                            where: {
+                                id: invoiceId,
+                            },
+                            data: {
+                                status: "PAID",
+                            },
+                        });
+
+                    return {
+                        payment,
+                        invoice: updatedInvoice,
+                    };
+                }
+            );
+
+            return result;
+        }
+
+        case "checkout.session.expired": {
+            const session = event.data.object;
+
+            console.log(
+                `Stripe checkout session expired: ${session.id}`
+            );
+
+            // No Payment record is created.
+            // Invoice remains unpaid.
+            return;
+        }
+
+        default:
+            return;
+    }
 };
+// export const handleStripeWebhookService = async (event) => {
+//     if (event.type !== "checkout.session.completed") {
+//         return;
+//     }
+
+//     const session = event.data.object;
+
+//     // 1. Verify payment
+//     if (session.payment_status !== "paid") {
+//         return;
+//     }
+
+//     // 2. Get metadata
+//     const {
+//         invoiceId,
+//         customerId,
+//         userId,
+//     } = session.metadata;
+
+//     // 3. Validate metadata
+//     if (!invoiceId || !customerId || !userId) {
+//         throw new ApiError(
+//             400,
+//             "Missing payment metadata"
+//         );
+//     }
+
+//     // 4. Find invoice
+//     const invoice = await prisma.invoice.findFirst({
+//         where: {
+//             id: invoiceId,
+//             userId,
+//         },
+//     });
+
+//     if (!invoice) {
+//         throw new ApiError(
+//             404,
+//             "Invoice not found"
+//         );
+//     }
+
+//     // 5. Prevent duplicate payment
+//     const existingPayment = await prisma.payment.findUnique({
+//         where: {
+//             stripeCheckoutSessionId: session.id,
+//         },
+//     });
+
+//     if (existingPayment) {
+//         return;
+//     }
+
+//     const result = await prisma.$transaction(async (tx) => {
+//         const payment = await tx.payment.create({
+//             data: {
+//                 amount: session.amount_total / 100,
+//                 paymentDate: new Date(),
+
+//                 method: "STRIPE_CARD",
+//                 status: "PAID",
+
+//                 stripeCheckoutSessionId: session.id,
+//                 stripePaymentIntentId: session.payment_intent,
+
+//                 invoiceId,
+//                 customerId,
+//                 userId,
+//             },
+//         });
+
+//         const updatedInvoice = await tx.invoice.update({
+//             where: {
+//                 id: invoiceId,
+//             },
+//             data: {
+//                 status: "PAID",
+//             },
+//         });
+
+//         return {
+//             payment,
+//             invoice: updatedInvoice,
+//         };
+//     });
+
+//     return result
+// };
