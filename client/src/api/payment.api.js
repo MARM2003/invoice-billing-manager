@@ -15,6 +15,8 @@ export const getPaymentsApi = async ({
     search = "",
     status,
     method,
+    startDate,
+    endDate,
 } = {}) => {
     const response = await api.get("/payments", {
         params: {
@@ -23,6 +25,8 @@ export const getPaymentsApi = async ({
             search,
             status,
             method,
+            startDate,
+            endDate,
         },
     });
 
