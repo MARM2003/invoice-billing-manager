@@ -25,8 +25,10 @@ export const getPaymentsController = async (req, res, next) => {
             search = "",
             status,
             method,
+            startDate,
+            endDate
         } = req.query;
-
+        
         const result = await getPayments({
             userId: req.user.userId,
             page: Number(page),
@@ -34,6 +36,8 @@ export const getPaymentsController = async (req, res, next) => {
             search,
             status,
             method,
+            startDate,
+            endDate
         });
 
         return res.status(200).json({
