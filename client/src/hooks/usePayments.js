@@ -28,7 +28,7 @@ const usePayments = () => {
     });
 
     // =========================================================
-    // Payment list filters
+    // Payment filters
     // =========================================================
 
     const [page, setPage] = useState(1);
@@ -42,7 +42,7 @@ const usePayments = () => {
     const [endDate, setEndDate] = useState("");
 
     // =========================================================
-    // Individual payment state
+    // Individual payment
     // =========================================================
 
     const [payment, setPayment] = useState(null);
@@ -147,6 +147,7 @@ const usePayments = () => {
                         endDate: requestedEndDate,
                     });
 
+              
                 const data = response?.data;
 
                 setPayments(
@@ -196,10 +197,10 @@ const usePayments = () => {
             page,
             limit,
             search,
-            status: status || undefined,
-            method: method || undefined,
-            startDate: startDate || undefined,
-            endDate: endDate || undefined,
+            status,
+            method,
+            startDate,
+            endDate,
         });
     }, [
         page,
@@ -211,19 +212,6 @@ const usePayments = () => {
         endDate,
         fetchPayments,
     ]);
-
-    // =========================================================
-    // Clear payment filters
-    // =========================================================
-
-    const clearFilters = useCallback(() => {
-        setSearch("");
-        setStatus("");
-        setMethod("");
-        setStartDate("");
-        setEndDate("");
-        setPage(1);
-    }, []);
 
     // =========================================================
     // Get payment by ID
@@ -322,6 +310,19 @@ const usePayments = () => {
     );
 
     // =========================================================
+    // Clear filters
+    // =========================================================
+
+    const clearFilters = useCallback(() => {
+        setSearch("");
+        setStatus("");
+        setMethod("");
+        setStartDate("");
+        setEndDate("");
+        setPage(1);
+    }, []);
+
+    // =========================================================
     // Reset error
     // =========================================================
 
@@ -334,17 +335,26 @@ const usePayments = () => {
     // =========================================================
 
     return {
+        // -----------------------------------------
         // Payment list
+        // -----------------------------------------
+
         payments,
         pagination,
 
-        // Payment pagination
+        // -----------------------------------------
+        // Pagination
+        // -----------------------------------------
+
         page,
         limit,
         setPage,
         setLimit,
 
-        // Payment filters
+        // -----------------------------------------
+        // Filters
+        // -----------------------------------------
+
         search,
         status,
         method,
@@ -359,23 +369,38 @@ const usePayments = () => {
 
         clearFilters,
 
+        // -----------------------------------------
         // Individual payment
+        // -----------------------------------------
+
         payment,
 
-        // Invoice payments
+        // -----------------------------------------
+        // Invoice payment history
+        // -----------------------------------------
+
         invoicePayments,
         paymentSummary,
 
-        // Loading states
+        // -----------------------------------------
+        // Loading
+        // -----------------------------------------
+
         loading,
         creatingPayment,
         loadingPayment,
         loadingInvoicePayments,
 
+        // -----------------------------------------
         // Error
+        // -----------------------------------------
+
         error,
 
+        // -----------------------------------------
         // Actions
+        // -----------------------------------------
+
         createManualPayment,
         fetchPayments,
         fetchPaymentById,
