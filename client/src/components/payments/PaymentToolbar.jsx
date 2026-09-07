@@ -143,8 +143,8 @@ const PaymentToolbar = ({
                             All Methods
                         </MenuItem>
 
-                        <MenuItem value="STRIPE">
-                            Stripe
+                        <MenuItem value="STRIPE_CARD">
+                            Stripe-Card
                         </MenuItem>
 
                         <MenuItem value="CASH">
