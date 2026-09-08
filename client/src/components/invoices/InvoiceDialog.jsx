@@ -29,7 +29,21 @@ import { calculateInvoiceTotals } from "../../utils/invoiceCalculations.js"
 
 import { createInvoiceService, updateInvoiceService } from "../../services/invoice.service.js";
 import { toast } from "react-toastify";
-
+const defaultInvoiceValues = {
+    customerId: "",
+    issueDate: "",
+    dueDate: "",
+    status: "DRAFT",
+    items: [
+        {
+            description: "",
+            quantity: 1,
+            unitPrice: "",
+            taxRate: 0,
+        },
+    ],
+    notes: "",
+};
 const InvoiceDialog = ({
     open,
     onClose,
@@ -37,6 +51,7 @@ const InvoiceDialog = ({
     mode,
     invoice,
 }) => {
+
     const {
         control,
         handleSubmit,
@@ -44,24 +59,7 @@ const InvoiceDialog = ({
         reset
     } = useForm({
         resolver: zodResolver(invoiceSchema),
-
-        defaultValues: {
-            customerId: "",
-            issueDate: "",
-            dueDate: "",
-            status: "DRAFT",
-
-            items: [
-                {
-                    description: "",
-                    quantity: 1,
-                    unitPrice: "",
-                    taxRate: 0,
-                },
-            ],
-
-            notes: "",
-        },
+        defaultValues: defaultInvoiceValues,
     });
 
     const {
@@ -114,29 +112,6 @@ const InvoiceDialog = ({
     const items = watch("items");
     const { subtotal, tax, total } = calculateInvoiceTotals(items)
 
-    // creating the invoice
-    // const onSubmit = async (data) => {
-    //     try {
-    //         if (mode === "create") {
-
-    //             const response = await createInvoiceService(data);
-    //             if (response && response.success) {
-    //                 toast.success("Invoice created successfully")
-    //                 await onSuccess();
-    //             }
-    //         } else {
-    //             const response = await updateInvoiceService(invoice.id, data);
-    //             if (response && response.success) {
-    //                 toast.success("Invoice updated successfully")
-    //                 await onSuccess();
-    //             }
-    //         }
-    //         onClose();
-    //     } catch (error) {
-    //         console.error("Failed to create invoice:", error);
-    //         toast.error("Failed to create invoice" || error)
-    //     }
-    // };
     const onSubmit = async (data) => {
         try {
             const response =
@@ -150,7 +125,9 @@ const InvoiceDialog = ({
                         ? "Invoice created successfully."
                         : "Invoice updated successfully."
                 );
-
+                reset(defaultInvoiceValues);
+                setCustomerSearch("");
+                setCustomers([]);
                 await onSuccess();
                 onClose();
             }
@@ -171,25 +148,20 @@ const InvoiceDialog = ({
         }
     };
 
-
     useEffect(() => {
+        if (!open) return;
+
         if (mode === "edit" && invoice) {
-            console.log(invoice.customerId)
             reset({
                 customerId: invoice.customerId,
-
                 issueDate: invoice.issueDate
                     ? invoice.issueDate.split("T")[0]
                     : "",
-
                 dueDate: invoice.dueDate
                     ? invoice.dueDate.split("T")[0]
                     : "",
-
                 status: invoice.status,
-
                 notes: invoice.notes || "",
-
                 items: invoice.items.map((item) => ({
                     description: item.description,
                     quantity: item.quantity,
@@ -198,8 +170,13 @@ const InvoiceDialog = ({
                 })),
             });
         }
-    }, [mode, invoice, reset]);
 
+        if (mode === "create") {
+            reset(defaultInvoiceValues);
+            setCustomerSearch("");
+            setCustomers([]);
+        }
+    }, [open, mode, invoice, reset]);
     return (
         <Dialog
             open={open}
