@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { getInvoicesService, getInvoiceByIdService, deleteInvoiceService, invoicePdfService, sendInvoiceService } from "../services/invoice.service.js";
 import useDebounce from "./useDebounce.js";
-import { toast } from "react-toastify";
 
 export const useInvoices = () => {
   // Invoice data
@@ -13,7 +12,13 @@ export const useInvoices = () => {
     message: "",
     severity: "success",
   });
-
+  const showToast = (message, severity = "success") => {
+    setToast({
+      open: true,
+      message,
+      severity,
+    });
+  };
   // UI state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -148,7 +153,10 @@ export const useInvoices = () => {
       const response = await deleteInvoiceService(selectedInvoice.id);
 
       if (response.success) {
-        toast.success("Invoice deleted successfully.");
+        showToast(
+          "Invoice deleted successfully.",
+          "success"
+        );
 
         closeDeleteDialog();
 
@@ -157,9 +165,10 @@ export const useInvoices = () => {
     } catch (error) {
       console.error("Failed to delete invoice:", error);
 
-      toast.error(
+      showToast(
         error.response?.data?.message ||
-        "Failed to delete invoice."
+        "Failed to delete invoice.",
+        "error"
       );
     } finally {
       setLoading(false);
@@ -191,19 +200,18 @@ export const useInvoices = () => {
   const handleSendInvoiceEmail = async (invoiceId) => {
     try {
       const response = await sendInvoiceService(invoiceId);
-      setToast({
-        open: true,
-        message: response.data.message || "Invoice sent successfully.",
-        severity: "success",
-      });
+      showToast(
+        response.data.message ||
+        "Invoice sent successfully.",
+        "success"
+      );
     } catch (error) {
       console.error("Failed sending email:", error);
 
-      setToast({
-        open: true,
-        message: "Failed to send invoice. Please try again.",
-        severity: "error",
-      });
+      showToast(
+        "Failed to send invoice. Please try again.",
+        "error"
+      );
     }
   };
 
@@ -268,5 +276,6 @@ export const useInvoices = () => {
     //toast
     toast,
     handleCloseToast,
+    showToast,
   };
 };
