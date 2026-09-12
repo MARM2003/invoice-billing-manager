@@ -57,6 +57,24 @@ export const createInvoicePaymentLinkService = async ({
 
         );
     }
+
+    const existingStripePayment =
+        await prisma.payment.findFirst({
+            where: {
+                invoiceId: invoice.id,
+                userId,
+                method: "STRIPE_CARD",
+                status: "PAID",
+            },
+        });
+
+    if (existingStripePayment) {
+        throw new ApiError(
+            400,
+            "Payment link cannot be created because this invoice has already been paid."
+        );
+    }
+
     const expiryMinutes = Number(
         process.env.STRIPE_PAYMENT_LINK_EXPIRY_MINUTES || 30
     );
@@ -112,7 +130,6 @@ export const handleStripeWebhookService = async (event) => {
         case "checkout.session.completed": {
             const session = event.data.object;
 
-            // Payment was not actually completed
             if (session.payment_status !== "paid") {
                 return;
             }
@@ -121,7 +138,7 @@ export const handleStripeWebhookService = async (event) => {
                 invoiceId,
                 customerId,
                 userId,
-            } = session.metadata;
+            } = session.metadata ?? {};
 
             if (!invoiceId || !customerId || !userId) {
                 throw new ApiError(
@@ -130,121 +147,130 @@ export const handleStripeWebhookService = async (event) => {
                 );
             }
 
-            // Check whether this Checkout Session
-            // has already been processed.
-            const existingPayment =
-                await prisma.payment.findUnique({
-                    where: {
-                        stripeCheckoutSessionId: session.id,
-                    },
-                });
-
-            if (existingPayment) {
-                console.log(
-                    `Payment already processed for session: ${session.id}`
-                );
-
-                return existingPayment;
-            }
-
-            const invoice = await prisma.invoice.findFirst({
-                where: {
-                    id: invoiceId,
-                    userId,
-                },
-            });
-
-            if (!invoice) {
-                throw new ApiError(
-                    404,
-                    "Invoice not found"
-                );
-            }
-
-            // Safety check:
-            // Do not process another payment if invoice
-            // has already been marked as PAID.
-            if (invoice.status === "PAID") {
-                console.log(
-                    `Invoice ${invoiceId} is already paid`
-                );
-
-                return;
-            }
-
             try {
-                const result = await prisma.$transaction(
-                    async (tx) => {
-                        const payment =
-                            await tx.payment.create({
-                                data: {
-                                    amount:
-                                        session.amount_total / 100,
+                const result = await prisma.$transaction(async (tx) => {
+                    /*
+                     * 1. Check whether this exact Stripe Checkout
+                     *    Session has already been processed.
+                     */
+                    const existingSessionPayment =
+                        await tx.payment.findUnique({
+                            where: {
+                                stripeCheckoutSessionId: session.id,
+                            },
+                        });
 
-                                    paymentDate: new Date(),
-
-                                    method: "STRIPE_CARD",
-
-                                    status: "PAID",
-
-                                    stripeCheckoutSessionId:
-                                        session.id,
-
-                                    stripePaymentIntentId:
-                                        session.payment_intent,
-
-                                    invoiceId,
-
-                                    customerId,
-
-                                    userId,
-                                },
-                            });
-
-                        const updatedInvoice =
-                            await tx.invoice.update({
-                                where: {
-                                    id: invoiceId,
-                                },
-                                data: {
-                                    status: "PAID",
-                                },
-                            });
-
+                    if (existingSessionPayment) {
                         return {
-                            payment,
-                            invoice: updatedInvoice,
+                            payment: existingSessionPayment,
+                            alreadyProcessed: true,
                         };
                     }
-                );
+
+                    /*
+                     * 2. Verify the invoice belongs to this user.
+                     */
+                    const invoice = await tx.invoice.findFirst({
+                        where: {
+                            id: invoiceId,
+                            userId,
+                        },
+                    });
+
+                    if (!invoice) {
+                        throw new ApiError(
+                            404,
+                            "Invoice not found"
+                        );
+                    }
+
+                    /*
+                     * 3. Check whether this invoice has already
+                     *    received a successful Stripe payment.
+                     *
+                     *    This is the important protection.
+                     *
+                     *    It prevents another payment even if
+                     *    invoice.status was changed from PAID
+                     *    back to SENT/DRAFT/etc.
+                     */
+                    const existingInvoicePayment =
+                        await tx.payment.findFirst({
+                            where: {
+                                invoiceId,
+                                userId,
+                                method: "STRIPE_CARD",
+                                status: "PAID",
+                            },
+                        });
+
+                    if (existingInvoicePayment) {
+                        return {
+                            payment: existingInvoicePayment,
+                            alreadyProcessed: true,
+                        };
+                    }
+
+                    /*
+                     * 4. Create the payment.
+                     */
+                    const payment = await tx.payment.create({
+                        data: {
+                            amount: session.amount_total / 100,
+                            paymentDate: new Date(),
+                            method: "STRIPE_CARD",
+                            status: "PAID",
+                            stripeCheckoutSessionId: session.id,
+                            stripePaymentIntentId:
+                                session.payment_intent,
+                            invoiceId,
+                            customerId,
+                            userId,
+                        },
+                    });
+
+                    /*
+                     * 5. Mark invoice as PAID.
+                     */
+                    const updatedInvoice =
+                        await tx.invoice.update({
+                            where: {
+                                id: invoiceId,
+                            },
+                            data: {
+                                status: "PAID",
+                            },
+                        });
+
+                    return {
+                        payment,
+                        invoice: updatedInvoice,
+                        alreadyProcessed: false,
+                    };
+                });
 
                 return result;
             } catch (error) {
-                // Stripe can send the same webhook more than once.
-                //
-                // Because stripeCheckoutSessionId is UNIQUE,
-                // Prisma will reject a duplicate payment.
-                //
-                // Check again whether the payment now exists.
+                /*
+                 * Stripe may deliver the same webhook more than once.
+                 *
+                 * stripeCheckoutSessionId is UNIQUE in Prisma,
+                 * so a concurrent duplicate attempt can produce
+                 * a P2002 error.
+                 *
+                 * Treat that as an already-processed payment.
+                 */
                 if (
                     error.code === "P2002" &&
                     error.meta?.target?.includes(
                         "stripeCheckoutSessionId"
                     )
                 ) {
-                    const existingPayment =
-                        await prisma.payment.findUnique({
-                            where: {
-                                stripeCheckoutSessionId:
-                                    session.id,
-                            },
-                        });
-
-                    console.log(
-                        `Duplicate webhook ignored for session: ${session.id}`
-                    );
-
-                    return existingPayment;
+                    return await prisma.payment.findUnique({
+                        where: {
+                            stripeCheckoutSessionId: session.id,
+                        },
+                    });
                 }
 
                 throw error;
@@ -252,15 +278,13 @@ export const handleStripeWebhookService = async (event) => {
         }
 
         case "checkout.session.expired": {
-            const session = event.data.object;
-
-            console.log(
-                `Stripe checkout session expired: ${session.id}`
-            );
-
-            // No Payment record is created.
-            // Invoice remains unpaid.
-
+            /*
+             * No payment was completed.
+             *
+             * Therefore:
+             * - Do not create a Payment record.
+             * - Do not change invoice status.
+             */
             return;
         }
 
@@ -268,3 +292,4 @@ export const handleStripeWebhookService = async (event) => {
             return;
     }
 };
+
