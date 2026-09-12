@@ -24,6 +24,7 @@ import { formatCurrency } from "../../utils/currency.js";
 import { formatDate } from "../../utils/date.js";
 import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
+import LinkOutlinedIcon from "@mui/icons-material/LinkOutlined";
 
 const TABLE_COLUMNS = [
     "Invoice #",
@@ -49,6 +50,7 @@ const InvoiceTable = ({
     onSendInvoiceEmail,
     onRecordPayment,
     onPaymentHistory,
+    onGeneratePaymentLink,
 }) => {
     return (
         <Paper elevation={2}>
@@ -169,6 +171,16 @@ const InvoiceTable = ({
                                                 <HistoryOutlinedIcon />
                                             </IconButton>
                                         </Tooltip>
+                                        <Tooltip title="Generate Payment Link">
+                                            <IconButton
+                                                size="small"
+                                                color="primary"
+                                                onClick={() => onGeneratePaymentLink(invoice)}
+                                                disabled={invoice.status === "PAID"}
+                                            >
+                                                <LinkOutlinedIcon fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
                                     </Stack>
                                 </TableCell>
                             </TableRow>
@@ -211,6 +223,8 @@ InvoiceTable.propTypes = {
     onRecordPayment: PropTypes.func.isRequired,
 
     onPaymentHistory: PropTypes.func.isRequired,
+
+    onGeneratePaymentLink: PropTypes.func.isRequired,
 };
 
 export default InvoiceTable;
