@@ -27,6 +27,42 @@ import { useInvoices } from "../../hooks/useInvoices.js";
 import usePayments from "../../hooks/usePayments.js";
 
 const InvoicesPage = () => {
+  /*
+   * -----------------------------------------
+   * Invoice hook
+   * -----------------------------------------
+   */
+
+  const {
+    invoices,
+    loading,
+    page,
+    limit,
+    pagination,
+    search,
+    setPage,
+    setLimit,
+    handleSearchChange,
+    refreshInvoices,
+    dialogOpen,
+    dialogMode,
+    openCreateDialog,
+    openEditDialog,
+    closeDialog,
+    drawerOpen,
+    selectedInvoice,
+    openDrawer,
+    closeDrawer,
+    deleteOpen,
+    openDeleteDialog,
+    closeDeleteDialog,
+    deleteInvoice,
+    handleInvoicePdf,
+    handleSendInvoiceEmail,
+    toast,
+    handleCloseToast,
+    showToast,
+  } = useInvoices();
 
   //online payment 
   const [paymentLinkOpen, setPaymentLinkOpen] = useState(false);
@@ -39,8 +75,10 @@ const InvoicesPage = () => {
   const [copiedMessage, setCopiedMessage] = useState(false);
   const handleGeneratePaymentLink = async (invoice) => {
     if (invoice.status === "PAID") {
-      // Your toast state is managed by useInvoices.
-      // We will handle this separately below.
+      showToast(
+        "Payment link cannot be created because this invoice has already been paid.",
+        "error"
+      );
       return;
     }
 
@@ -50,8 +88,6 @@ const InvoicesPage = () => {
       const response = await onlinePaymentLinkService(
         invoice.id
       );
-
-      console.log("Payment link response:", response);
 
       const generatedLink = response?.data?.paymentUrl;
 
@@ -70,6 +106,12 @@ const InvoicesPage = () => {
         "Failed to generate payment link:",
         error
       );
+
+      showToast(
+        error.response?.data?.message ||
+        "Failed to generate payment link. Please try again.",
+        "error"
+      );
     } finally {
       setGeneratingPaymentLink(false);
     }
@@ -79,7 +121,10 @@ const InvoicesPage = () => {
       await navigator.clipboard.writeText(paymentLink);
 
       setCopiedLink(true);
-
+      showToast(
+        "Payment link copied successfully.",
+        "success"
+      );
       setTimeout(() => {
         setCopiedLink(false);
       }, 2000);
@@ -88,6 +133,10 @@ const InvoicesPage = () => {
         "Failed to copy payment link:",
         error
       );
+      showToast(
+        "Failed to copy payment link.",
+        "error"
+      );
     }
   };
   const handleCopyPaymentMessage = async (message) => {
@@ -95,7 +144,10 @@ const InvoicesPage = () => {
       await navigator.clipboard.writeText(message);
 
       setCopiedMessage(true);
-
+      showToast(
+        "Payment message copied successfully.",
+        "success"
+      );
       setTimeout(() => {
         setCopiedMessage(false);
       }, 2000);
@@ -103,6 +155,10 @@ const InvoicesPage = () => {
       console.error(
         "Failed to copy payment message:",
         error
+      );
+      showToast(
+        "Failed to copy payment message.",
+        "error"
       );
     }
   };
@@ -228,41 +284,7 @@ const InvoicesPage = () => {
     setPaymentHistoryInvoice(null);
   };
 
-  /*
-   * -----------------------------------------
-   * Invoice hook
-   * -----------------------------------------
-   */
 
-  const {
-    invoices,
-    loading,
-    page,
-    limit,
-    pagination,
-    search,
-    setPage,
-    setLimit,
-    handleSearchChange,
-    refreshInvoices,
-    dialogOpen,
-    dialogMode,
-    openCreateDialog,
-    openEditDialog,
-    closeDialog,
-    drawerOpen,
-    selectedInvoice,
-    openDrawer,
-    closeDrawer,
-    deleteOpen,
-    openDeleteDialog,
-    closeDeleteDialog,
-    deleteInvoice,
-    handleInvoicePdf,
-    handleSendInvoiceEmail,
-    toast,
-    handleCloseToast,
-  } = useInvoices();
 
   /*
    * -----------------------------------------
