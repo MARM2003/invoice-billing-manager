@@ -15,7 +15,6 @@ import {
 
 import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
 
-// import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DoneOutlinedIcon from "@mui/icons-material/DoneOutlined";
 
 const PaymentLinkDialog = ({
