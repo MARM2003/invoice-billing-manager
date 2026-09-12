@@ -21,10 +21,99 @@ import InvoiceDeleteDialog from "../../components/invoices/InvoiceDeleteDialog.j
 import PaymentHistoryDrawer from "../../components/payments/PaymentHistoryDrawer.jsx";
 import ManualPaymentModal from "../../components/payments/ManualPaymentModal.jsx";
 
+import PaymentLinkDialog from "../../components/payments/PaymentLinkDialog.jsx";
+import { onlinePaymentLinkService } from "../../services/stripe.service.js";
 import { useInvoices } from "../../hooks/useInvoices.js";
 import usePayments from "../../hooks/usePayments.js";
 
 const InvoicesPage = () => {
+
+  //online payment 
+  const [paymentLinkOpen, setPaymentLinkOpen] = useState(false);
+  const [paymentLinkInvoice, setPaymentLinkInvoice] = useState(null);
+  const [paymentLink, setPaymentLink] = useState("");
+  const [generatingPaymentLink, setGeneratingPaymentLink] =
+    useState(false);
+
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedMessage, setCopiedMessage] = useState(false);
+  const handleGeneratePaymentLink = async (invoice) => {
+    if (invoice.status === "PAID") {
+      // Your toast state is managed by useInvoices.
+      // We will handle this separately below.
+      return;
+    }
+
+    try {
+      setGeneratingPaymentLink(true);
+
+      const response = await onlinePaymentLinkService(
+        invoice.id
+      );
+
+      console.log("Payment link response:", response);
+
+      const generatedLink = response?.data?.paymentUrl;
+
+      if (!generatedLink) {
+        throw new Error(
+          "Payment link was not returned by the server."
+        );
+      }
+
+      setPaymentLinkInvoice(invoice);
+      setPaymentLink(generatedLink);
+      setPaymentLinkOpen(true);
+
+    } catch (error) {
+      console.error(
+        "Failed to generate payment link:",
+        error
+      );
+    } finally {
+      setGeneratingPaymentLink(false);
+    }
+  };
+  const handleCopyPaymentLink = async () => {
+    try {
+      await navigator.clipboard.writeText(paymentLink);
+
+      setCopiedLink(true);
+
+      setTimeout(() => {
+        setCopiedLink(false);
+      }, 2000);
+    } catch (error) {
+      console.error(
+        "Failed to copy payment link:",
+        error
+      );
+    }
+  };
+  const handleCopyPaymentMessage = async (message) => {
+    try {
+      await navigator.clipboard.writeText(message);
+
+      setCopiedMessage(true);
+
+      setTimeout(() => {
+        setCopiedMessage(false);
+      }, 2000);
+    } catch (error) {
+      console.error(
+        "Failed to copy payment message:",
+        error
+      );
+    }
+  };
+  const handleClosePaymentLink = () => {
+    setPaymentLinkOpen(false);
+    setPaymentLinkInvoice(null);
+    setPaymentLink("");
+    setCopiedLink(false);
+    setCopiedMessage(false);
+  };
+
   /*
    * -----------------------------------------
    * Navigation
@@ -268,6 +357,7 @@ const InvoicesPage = () => {
           onPaymentHistory={
             handlePaymentHistory
           }
+          onGeneratePaymentLink={handleGeneratePaymentLink}
         />
       )}
 
@@ -325,7 +415,16 @@ const InvoicesPage = () => {
         paymentSummary={paymentSummary}
         loading={loadingInvoicePayments}
       />
-
+      <PaymentLinkDialog
+        open={paymentLinkOpen}
+        onClose={handleClosePaymentLink}
+        invoice={paymentLinkInvoice}
+        paymentLink={paymentLink}
+        onCopyLink={handleCopyPaymentLink}
+        onCopyMessage={handleCopyPaymentMessage}
+        copiedLink={copiedLink}
+        copiedMessage={copiedMessage}
+      />
       {/* Toast */}
 
       <Snackbar
