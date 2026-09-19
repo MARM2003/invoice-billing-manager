@@ -12,7 +12,8 @@ import invoiceRouter from "./routes/v1/invoice.routes.js"
 import dashboardRoutes from "./routes/v1/dashboard.routes.js"
 import paymentRoutes from "./routes/v1/payment.routes.js";
 import stipeInvoiceRoute from "./routes/v1/stripe.routes.js"
-
+import subscriptionRoutes from "./routes/v1/subscription.routes.js";
+import subscriptionWebhookRoute from "./routes/v1/subsWebhook.routes.js"
 //creating the app
 const app = express();
 
@@ -26,6 +27,13 @@ app.use(
   "/api/v1/stripe-payment",
   express.raw({ type: "application/json" })
 );
+app.use(
+  "/api/v1/subscriptions/webhook",
+  express.raw({ type: "application/json" }),
+  subscriptionWebhookRoute
+);
+
+
 //incoming json parse
 app.use(express.json());
 //cookie-parser
@@ -58,6 +66,9 @@ app.use("/api/v1/payments", paymentRoutes);
 
 //stipe invoice payment 
 app.use("/api/v1/stripe-payment", stipeInvoiceRoute)
+
+//subscription plan
+app.use("/api/v1/subscriptions", subscriptionRoutes);
 
 // Global error handler
 app.use(errorHandler);
