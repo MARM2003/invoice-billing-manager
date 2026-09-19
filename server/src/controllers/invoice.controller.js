@@ -6,7 +6,7 @@ export const createInvoice = async (req, res, next) => {
     const userId = req.user.userId;
 
     const invoice = await createInvoiceService(userId, req.body);
-
+    
     return res.status(201).json({
       success: true,
       message: "Invoice created successfully.",
