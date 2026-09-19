@@ -5,8 +5,17 @@ import invoiceTemplate from "../utils/pdf/invoiceTemplate.js";
 import generateInvoicePdf from "../utils/pdf/generateInvoicePdf.js";
 
 import { sendEmail } from "./email.service.js";
+import {
+    canCreateInvoice,
+} from "./subscription.service.js";
 
 export const createInvoiceService = async (userId, invoiceData) => {
+    const access = await canCreateInvoice(userId);
+
+    if (!access.allowed) {
+        throw new ApiError(403, "You have reached the free invoice limit. Please subscribe to continue.")
+    }
+
     const {
         customerId,
         issueDate,
@@ -27,6 +36,8 @@ export const createInvoiceService = async (userId, invoiceData) => {
     if (!customer) {
         throw new ApiError(404, "Customer not found.");
     }
+
+
 
     // Generate invoice number
     const latestInvoice = await prisma.invoice.findFirst({
