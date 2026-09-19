@@ -13,7 +13,9 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import CustomersPage from "../pages/customer/CustomersPage"
 import InvoicesPage from "../pages/invoice/InvoicesPage"
 import PaymentsPage from "../pages/payment/PaymentsPage"
-import SubscriptionPage  from "../pages/subscription/SubscriptionPage"
+import SubscriptionPage from "../pages/subscription/SubscriptionPage"
+import SubscriptionSuccessPage from "../pages/subscription/SubscriptionSuccessPage";
+import SubscriptionCancelPage from "../pages/subscription/SubscriptionCancelPage";
 import SettingsPage from "../pages/settings/SettingsPage"
 
 
@@ -26,7 +28,7 @@ const AppRoutes = () => {
       <Route path="/login" element={<LoginPage />} />
 
 
-       <Route
+      <Route
         path="/complete-profile"
         element={
           <ProtectedRoute>
@@ -45,18 +47,28 @@ const AppRoutes = () => {
         }
       >
 
-     
 
-      <Route index element={<DashboardPage />} />
-      <Route path="customers" element={<CustomersPage />} />
-      <Route path="invoices" element={<InvoicesPage />} />
-      <Route path="payments" element={<PaymentsPage />} />
-      <Route path="subscription" element={<SubscriptionPage />} />
-      <Route path="settings" element={<SettingsPage />} />
-    </Route>
 
-      {/* Default Route */ }
-  <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route index element={<DashboardPage />} />
+        <Route path="customers" element={<CustomersPage />} />
+        <Route path="invoices" element={<InvoicesPage />} />
+        <Route path="payments" element={<PaymentsPage />} />
+        <Route path="subscription" element={<SubscriptionPage />} />
+
+        <Route
+          path="subscription/success"
+          element={<SubscriptionSuccessPage />}
+        />
+
+        <Route
+          path="subscription/cancel"
+          element={<SubscriptionCancelPage />}
+        />
+        <Route path="settings" element={<SettingsPage />} />
+      </Route>
+
+      {/* Default Route */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes >
   );
 };
