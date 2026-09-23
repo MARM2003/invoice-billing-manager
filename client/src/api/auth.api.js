@@ -1,7 +1,7 @@
 import api from "./axios";
 import refreshApi from "./refreshApi";
 export const registerAPI = (data) => {
-  return api.post("/auth/register", data);
+   return api.post("/auth/register", data);
 };
 
 export const loginAPI = (data) => {
